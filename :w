@@ -1,0 +1,21 @@
+$LOAD_PATH << "lib"
+
+require 'calcalc'
+
+month = ARGV[0].to_i
+year = ARGV[1].to_i
+start_day = CalCalc.zeller(1, month, year)
+
+months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+month_s = months[month-1]
+
+day_counts = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+days = day_counts[month-1]
+
+if month == 2 && CalCalc.leap?(year)
+  days += 1
+end
+
+puts month_s + ' ' + year.to_s
+puts 'Su Mo Tu We Th Fr Sa'
+puts days + ' days in this month'
