@@ -4,7 +4,7 @@ class TestCalIntegration < MiniTest::Unit::TestCase
 
   def test_a_regular_month
     actual_output = ''
-    IO.popen('ruby cal.rb 4 2014', 'r+') do |pipe|
+    IO.popen('./cal 4 2014', 'r+') do |pipe|
       actual_output = pipe.read
     end
 
@@ -22,7 +22,7 @@ EOS
 
   def test_a_regular_february
     actual_output = ''
-    IO.popen('ruby cal.rb 2 2014', 'r+') do |pipe|
+    IO.popen('./cal 2 2014', 'r+') do |pipe|
       actual_output = pipe.read
     end
 
@@ -40,7 +40,7 @@ EOS
 
   def test_a_leap_february
     actual_output = ''
-    IO.popen('ruby cal.rb 2 2012', 'r+') do |pipe|
+    IO.popen('./cal 2 2012', 'r+') do |pipe|
       actual_output = pipe.read
     end
 
@@ -58,7 +58,7 @@ EOS
 
   def test_an_unusual_leap_february
     actual_output = ''
-    IO.popen('ruby cal.rb 2 2000', 'r+') do |pipe|
+    IO.popen('./cal 2 2000', 'r+') do |pipe|
       actual_output = pipe.read
     end
 
@@ -76,7 +76,7 @@ EOS
 
   def test_a_6_line_month
     actual_output = ''
-    IO.popen('ruby cal.rb 12 2012', 'r+') do |pipe|
+    IO.popen('./cal 12 2012', 'r+') do |pipe|
       actual_output = pipe.read
     end
 
@@ -95,7 +95,7 @@ EOS
 
   def test_a_4_line_month
     actual_output = ''
-    IO.popen('ruby cal.rb 2 2015', 'r+') do |pipe|
+    IO.popen('./cal 2 2015', 'r+') do |pipe|
       actual_output = pipe.read
     end
 
@@ -112,7 +112,7 @@ EOS
 
   def test_an_early_month
     actual_output = ''
-    IO.popen('ruby cal.rb 2 1800', 'r+') do |pipe|
+    IO.popen('./cal 2 1800', 'r+') do |pipe|
       actual_output = pipe.read
     end
 
@@ -130,7 +130,7 @@ EOS
 
   def test_a_month_that_starts_on_sunday
     actual_output = ''
-    IO.popen('ruby cal.rb 3 2015', 'r+') do |pipe|
+    IO.popen('./cal 3 2015', 'r+') do |pipe|
       actual_output = pipe.read
     end
 
@@ -145,5 +145,4 @@ Su Mo Tu We Th Fr Sa
 EOS
     assert_equal expected_output, actual_output
   end
-
 end

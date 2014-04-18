@@ -1,6 +1,10 @@
+#!/usr/bin/env ruby
+
 $LOAD_PATH << "lib"
 
 require 'calcalc'
+
+abort ("cal: please enter a month and year only, separated by a space") unless ARGV.length == 2
 
 month = ARGV[0].to_i
 year = ARGV[1].to_i
