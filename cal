@@ -4,43 +4,143 @@ $LOAD_PATH << "lib"
 
 require 'calcalc'
 
-abort ("cal: please enter a month and year only, separated by a space") unless ARGV.length == 2
+abort ("cal: please enter a month and year separated by a space, or just enter a year") unless ARGV.length == 1 || ARGV.length == 2
 
-month = ARGV[0].to_i
-year = ARGV[1].to_i
-start_day = CalCalc.zeller(1, month, year)
+if ARGV.length == 1
+  year = ARGV[0].to_i
+  abort ("cal: please enter a year later than 1752, the year of the English change from the Julian to Gregorian calendar") if year < 1753
+  puts "                             #{year}"
+  puts
 
-#Changing start_day from Zeller notation (0=Saturday) to standard (0=Sunday)
-if start_day == 0
-  start_day = 7
-end
-start_day -= 1
-#
+  count = 0
+  4.times do
+    start_days = []
+    start_days << CalCalc.zeller(1, count+1, year)
+    start_days << CalCalc.zeller(1, count+2, year)
+    start_days << CalCalc.zeller(1, count+3, year)
+    #Changing start_day from Zeller notation (0=Saturday) to standard (0=Sunday)
+    i = 0
+    3.times do
+      if start_days[i] == 0
+        start_days[i] = 7
+      end
+      start_days[i] -= 1
+      i += 1
+    end
+    #
 
-months = ['    January', '   February', '     March', '     April', '      May', '     June', '     July', '    August', '   September', '    October', '   November', '   December']
-month_s = months[month-1]
+    months = []
+    month_names = ['      January         ', '      February        ', '       March', '       April          ', '        May           ', '        June', '        July          ', '       August         ', '     September', '      October         ', '      November       ', '       December']
+    months << month_names[count]
+    months << month_names[count+1]
+    months << month_names[count+2]
 
-day_counts = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-days = day_counts[month-1]
+    day_counts = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    if CalCalc.leap?(year)
+      day_counts[1] = 29
+    end
+    days = []
+    days << day_counts[count]
+    days << day_counts[count+1]
+    days << day_counts[count+2]
 
-if month == 2 && CalCalc.leap?(year)
-  days += 1
-end
+    #-----Top Two Lines of Chunk-----#
+    months.each do |m|
+      print m
+    end
+    puts
 
-puts month_s + ' ' + year.to_s
-puts 'Su Mo Tu We Th Fr Sa'
-start_day.times do
-  print '   '
-end
-count = 1
-days.times do
-  day_s = count.to_s + ' '
-  day_s.prepend(' ') if count < 10
-  if (start_day + count)%7 == 0 || count == days
-    day_s.chomp!(' ')
-    puts day_s
-  else
-    print day_s
+    puts "Su Mo Tu We Th Fr Sa  Su Mo Tu We Th Fr Sa  Su Mo Tu We Th Fr Sa"
+
+    #-----First Line of Dates-----#
+    j = 0
+    start_days.each do |start|
+      start.times do
+        print '   '
+      end
+      day = 1
+      (7-start).times do
+        print " #{day.to_s} "
+        day += 1
+      end
+      print ' '
+      start_days[j] = day
+      j += 1
+    end
+    puts
+
+    #-----Rest of the Date Lines-----#
+    done = [false, false, false]
+    until done == [true, true, true] do
+      i = 0
+      3.times do
+        7.times do
+          print " " if start_days[i] < 10
+          if start_days[i] <= days[i]
+            print "#{(start_days[i])} "
+          else
+            print "   "
+            done[i] = true
+          end
+          start_days[i] += 1
+        end
+        print " "
+        i += 1
+      end
+      puts
+    end
+
+    count += 3
   end
-  count += 1
+elsif ARGV.length == 2
+  long_months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  short_months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+  if long_months.include?(ARGV[0].capitalize)
+    month = (long_months.index(ARGV[0].capitalize) + 1)
+  elsif short_months.include?(ARGV[0].capitalize)
+    month = (short_months.index(ARGV[0].capitalize) + 1)
+  elsif ARGV[0].to_i != 0
+    month = ARGV[0].to_i
+  else
+    abort ("cal: please enter either a month number, the full name of a month, or the three-letter short name of a month")
+  end
+
+  year = ARGV[1].to_i
+  start_day = CalCalc.zeller(1, month, year)
+
+  #Changing start_day from Zeller notation (0=Saturday) to standard (0=Sunday)
+  if start_day == 0
+    start_day = 7
+  end
+  start_day -= 1
+  #
+
+  months = ['    January', '   February', '     March', '     April', '      May', '     June', '     July', '    August', '   September', '    October', '   November', '   December']
+  month_s = months[month-1]
+
+  day_counts = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+  days = day_counts[month-1]
+
+  if month == 2 && CalCalc.leap?(year)
+    days += 1
+  end
+
+  puts month_s + ' ' + year.to_s
+  puts 'Su Mo Tu We Th Fr Sa'
+  start_day.times do
+    print '   '
+  end
+  count = 1
+  days.times do
+    day_s = count.to_s + ' '
+    day_s.prepend(' ') if count < 10
+    if (start_day + count)%7 == 0 || count == days
+      day_s.chomp!(' ')
+      puts day_s
+    else
+      print day_s
+    end
+    count += 1
+  end
 end
