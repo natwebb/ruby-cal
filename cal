@@ -4,16 +4,23 @@ $LOAD_PATH << "lib"
 
 require 'calcalc'
 
-abort ("cal: please enter a month and year separated by a space, or just enter a year") unless ARGV.length == 1 || ARGV.length == 2
+abort ("cal: please enter either a year after 1752, or a month and year separated by a space") unless ARGV.length == 1 || ARGV.length == 2
 
-if ARGV.length == 1
-  year = ARGV[0].to_i
-  abort ("cal: please enter a year later than 1752, the year of the English change from the Julian to Gregorian calendar") if year < 1753
+if ARGV.length == 1 #instructions if there is only one command-line argument, which must be a year
+
+  year = ARGV[0].to_i #converts the command-line argument to an integer; note that any non-number arguments will convert to 0 and be caught below
+  abort ("cal: please enter a numerical year later than 1752, the year of the English change from the Julian to Gregorian calendar") if year < 1753
+
+  #----------------------------------------------Print the year header
   puts "                             #{year}"
   puts
+  #----------------------------------------------
 
+
+  #----------------------------------------------Output calendar in four groups of three months; the count variable tracks which group we're in
   count = 0
   4.times do
+    #--------------------------------------------Calculate start days for this group of three months
     start_days = []
     start_days << CalCalc.zeller(1, count+1, year)
     start_days << CalCalc.zeller(1, count+2, year)
@@ -27,14 +34,19 @@ if ARGV.length == 1
       start_days[i] -= 1
       i += 1
     end
-    #
+    #--------------------------------------------
 
+
+    #--------------------------------------------Load month headers for this group of three months
     months = []
     month_names = ['      January         ', '      February        ', '       March', '       April          ', '        May           ', '        June', '        July          ', '       August         ', '     September', '      October         ', '      November       ', '       December']
     months << month_names[count]
     months << month_names[count+1]
     months << month_names[count+2]
+    #--------------------------------------------
 
+
+    #--------------------------------------------Load day counts for this group of three months, correcting February if it's a leap year
     day_counts = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     if CalCalc.leap?(year)
       day_counts[1] = 29
@@ -43,16 +55,20 @@ if ARGV.length == 1
     days << day_counts[count]
     days << day_counts[count+1]
     days << day_counts[count+2]
+    #--------------------------------------------
 
-    #-----Top Two Lines of Chunk-----#
+
+    #--------------------------------------------Print the month headers and day-name headers
     months.each do |m|
       print m
     end
     puts
 
     puts "Su Mo Tu We Th Fr Sa  Su Mo Tu We Th Fr Sa  Su Mo Tu We Th Fr Sa"
+    #--------------------------------------------
 
-    #-----First Line of Dates-----#
+
+    #--------------------------------------------Print the first line of dates, beginning with an offset of blank space based on the start day
     j = 0
     start_days.each do |start|
       start.times do
@@ -68,8 +84,10 @@ if ARGV.length == 1
       j += 1
     end
     puts
+    #--------------------------------------------
 
-    #-----Rest of the Date Lines-----#
+
+    #--------------------------------------------Print the rest of the date lines, ending when all three months have reached their day count
     done = [false, false, false]
     until done == [true, true, true] do
       i = 0
@@ -89,10 +107,16 @@ if ARGV.length == 1
       end
       puts
     end
+    #--------------------------------------------
 
+
+    #--------------------------------------------Increment the count by three to jump to the next group of three months
     count += 3
   end
-elsif ARGV.length == 2
+
+elsif ARGV.length == 2 #instructions if there are two command-line arguments, which must be a month and year
+
+  #----------------------------------------------Checks to see if the user input the month as a word or three-letter abbreviation rather than number, and converts to a number if so
   long_months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
   short_months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -105,17 +129,21 @@ elsif ARGV.length == 2
   else
     abort ("cal: please enter either a month number, the full name of a month, or the three-letter short name of a month")
   end
+  #----------------------------------------------
 
+
+  #----------------------------------------------Converts the year to an integer and then gets the start day of the month
   year = ARGV[1].to_i
   start_day = CalCalc.zeller(1, month, year)
-
   #Changing start_day from Zeller notation (0=Saturday) to standard (0=Sunday)
   if start_day == 0
     start_day = 7
   end
   start_day -= 1
-  #
+  #----------------------------------------------
 
+
+  #----------------------------------------------Gets the month title and day count (with corrected February in a leap year)
   months = ['    January', '   February', '     March', '     April', '      May', '     June', '     July', '    August', '   September', '    October', '   November', '   December']
   month_s = months[month-1]
 
@@ -125,7 +153,10 @@ elsif ARGV.length == 2
   if month == 2 && CalCalc.leap?(year)
     days += 1
   end
+  #----------------------------------------------
 
+
+  #----------------------------------------------Outputs the calendar: month header, day header, and day numbers
   puts month_s + ' ' + year.to_s
   puts 'Su Mo Tu We Th Fr Sa'
   start_day.times do
@@ -143,4 +174,6 @@ elsif ARGV.length == 2
     end
     count += 1
   end
+  #----------------------------------------------
+
 end
