@@ -1,0 +1,213 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH << "lib"
+
+require 'calcalc'
+
+abort ("cal: please enter either a year after 1752, or a month and year separated by a space") unless ARGV.length == 1 || ARGV.length == 2
+
+reg = /--rows=\d/
+
+if ARGV.length == 1 || ARGV.length ==2 && reg.match(ARGV[1]) #instructions if there is only one command-line argument, which must be a year
+
+  year = ARGV[0].to_i #converts the command-line argument to an integer; note that any non-number arguments will convert to 0 and be caught below
+  abort ("cal: please enter a numerical year later than 1752, the year of the English change from the Julian to Gregorian calendar") if year < 1753
+
+  rows = 4
+  if ARGV[1]
+    r = ARGV[1].delete('-rows=')
+    rows = r.to_i
+  end
+  cols = 12/rows
+
+  #----------------------------------------------Print the year header
+  puts "                             #{year}"
+  puts
+  #----------------------------------------------
+
+
+  #----------------------------------------------Output calendar in rows groups of cols months; the count variable tracks which group we're in
+  count = 0
+  rows.times do
+    #--------------------------------------------Calculate start days for this group of months
+    start_days = []
+    i = 1
+    cols.times do
+      start_days << CalCalc.zeller(1, count+i, year)
+      i += 1
+    end
+    #Changing start_day from Zeller notation (0=Saturday) to standard (0=Sunday)
+    i = 0
+    cols.times do
+      if start_days[i] == 0
+        start_days[i] = 7
+      end
+      start_days[i] -= 1
+      i += 1
+    end
+    #--------------------------------------------
+
+
+    #--------------------------------------------Load month headers for this group of months
+    months = []
+    month_names = ['      January       ', '      February      ', '       March        ', '       April        ', '        May         ', '        June        ', '        July        ', '       August       ', '     September      ', '      October       ', '      November      ', '      December      ']
+    i = 0
+    cols.times do
+      months << month_names[count + i]
+      if i == cols-1
+        m = months[i]
+        m.rstrip!
+        months[i] = m
+      end
+      i += 1
+    end
+    #--------------------------------------------
+
+
+    #--------------------------------------------Load day counts for this group of months, correcting February if it's a leap year
+    day_counts = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    if CalCalc.leap?(year)
+      day_counts[1] = 29
+    end
+    days = []
+    i = 0
+    cols.times do
+      days << day_counts[count + i]
+      i += 1
+    end
+    #--------------------------------------------
+
+
+    #--------------------------------------------Print the month headers and day-name headers
+    months.each do |m|
+      print m
+      print '  ' unless months.index(m) == cols-1
+    end
+    puts
+
+    (cols-1).times do
+      print "Su Mo Tu We Th Fr Sa  "
+    end
+    puts "Su Mo Tu We Th Fr Sa"
+    #--------------------------------------------
+
+
+    #--------------------------------------------Print the first line of dates, beginning with an offset of blank space based on the start day
+    j = 0
+    start_days.each do |start|
+      start.times do
+        print '   '
+      end
+      day = 1
+      (7-start).times do
+        print " #{day.to_s}"
+        print ' 'unless j == cols-1 && (start+day) == 7
+        day += 1
+      end
+      print ' ' if j < cols-1
+      start_days[j] = day
+      j += 1
+    end
+    puts
+    #--------------------------------------------
+
+
+    #--------------------------------------------Print the rest of the date lines, ending when all three months have reached their day count
+    done = []
+    expected_done = []
+    cols.times do
+      done << false
+      expected_done << true
+    end
+    until done == expected_done do
+      i = 0
+      cols.times do
+        counter = 1
+        7.times do
+          print " " if start_days[i] < 10
+          if start_days[i] <= days[i]
+            print "#{(start_days[i])}"
+            print ' ' unless i == cols-1 && counter == 7
+          else
+            print '  '
+            print ' ' unless i == cols-1 && counter == 7
+            done[i] = true
+          end
+          start_days[i] += 1
+          counter += 1
+        end
+        print " " if i < cols-1
+        i += 1
+      end
+      puts
+    end
+    #--------------------------------------------
+
+
+    #--------------------------------------------Increment the count by cols to jump to the next group of three months
+    count += cols
+  end
+
+elsif ARGV.length == 2 #instructions if there are two command-line arguments, which must be a month and year
+
+  #----------------------------------------------Checks to see if the user input the month as a word or three-letter abbreviation rather than number, and converts to a number if so
+  long_months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  short_months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+  if long_months.include?(ARGV[0].capitalize)
+    month = (long_months.index(ARGV[0].capitalize) + 1)
+  elsif short_months.include?(ARGV[0].capitalize)
+    month = (short_months.index(ARGV[0].capitalize) + 1)
+  elsif ARGV[0].to_i != 0
+    month = ARGV[0].to_i
+  else
+    abort ("cal: please enter either a month number, the full name of a month, or the three-letter short name of a month")
+  end
+  #----------------------------------------------
+
+
+  #----------------------------------------------Converts the year to an integer and then gets the start day of the month
+  year = ARGV[1].to_i
+  start_day = CalCalc.zeller(1, month, year)
+  #Changing start_day from Zeller notation (0=Saturday) to standard (0=Sunday)
+  if start_day == 0
+    start_day = 7
+  end
+  start_day -= 1
+  #----------------------------------------------
+
+
+  #----------------------------------------------Gets the month title and day count (with corrected February in a leap year)
+  months = ['    January', '   February', '     March', '     April', '      May', '     June', '     July', '    August', '   September', '    October', '   November', '   December']
+  month_s = months[month-1]
+
+  day_counts = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+  days = day_counts[month-1]
+
+  if month == 2 && CalCalc.leap?(year)
+    days += 1
+  end
+  #----------------------------------------------
+
+
+  #----------------------------------------------Outputs the calendar: month header, day header, and day numbers
+  puts month_s + ' ' + year.to_s
+  puts 'Su Mo Tu We Th Fr Sa'
+  start_day.times do
+    print '   '
+  end
+  count = 1
+  days.times do
+    day_s = count.to_s + ' '
+    day_s.prepend(' ') if count < 10
+    if (start_day + count)%7 == 0 || count == days
+      day_s.chomp!(' ')
+      puts day_s
+    else
+      print day_s
+    end
+    count += 1
+  end
+  #----------------------------------------------
+
+end
