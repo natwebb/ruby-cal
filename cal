@@ -4,15 +4,17 @@ $LOAD_PATH << "lib"
 
 require 'calcalc'
 require 'month'
+require 'year'
 
 abort ("cal: please enter either a year after 1752, or a month and year separated by a space") unless ARGV.length == 1 || ARGV.length == 2
 
 reg = /--rows=\d/
 
 if ARGV.length == 1 || ARGV.length ==2 && reg.match(ARGV[1]) #instructions if there is only one command-line argument, which must be a year, or one argument plus the --rows=# option
-
+  #--------------------------------------------Checks to make sure the user input a number greater than 1752 for the year
   year = ARGV[0]
-  abort ("cal: please enter a numerical year later than 1752, the year of the English change from the Julian to Gregorian calendar") if year.to_i < 1753
+  abort ("cal: please enter a numerical year later than 1752, the year of the English change from the Julian to Gregorian calendar.") if year.to_i < 1753
+  #--------------------------------------------
 
   rows = 4
   if ARGV[1]
@@ -21,53 +23,52 @@ if ARGV.length == 1 || ARGV.length ==2 && reg.match(ARGV[1]) #instructions if th
   end
   cols = (12.0/rows).ceil
 
-  month_strings = []
-  i = 1
-  12.times do
-    month_strings << Month.new(i.to_s, year).to_year_s
-    i += 1
-  end
+  month_strings = Year.new(year).to_a
 
   puts "                             #{year}"
   puts
 
   s = 0
+  lines_per_month = 8
   rows.times do
-    j = 0
-    8.times do
+    lines_per_month.times do |j|
       i = s
-      str = ''
+      line = ''
       cols.times do
         break if i > 11
         if (i+1)%cols == 0
-          str << month_strings[i].slice(20*j, 20)
+          line << month_strings[i].slice(20*j, 20)
         else
-          str << month_strings[i].slice(20*j, 20) + '  '
+          line << month_strings[i].slice(20*j, 20) + '  '
         end
         i += 1
       end
-      puts str.rstrip
-      j += 1
+      puts line.rstrip
     end
     s += cols
   end
 
 elsif ARGV.length == 2 #instructions if there are two command-line arguments, which must be a month and year
+  m = ARGV[0]
+  year = ARGV[1]
 
-  month = Month.new(ARGV[0], ARGV[1])
+  #--------------------------------------------Checks to see if the user input the month as a word or three-letter abbreviation rather than a number, and converts to a month number
+  long_months = %w(January February March April May June July August September October November December)
+  short_months = %w(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)
+  if long_months.include?(m.capitalize)
+    month = (long_months.index(m.capitalize)+1)
+  elsif short_months.include?(m.capitalize)
+    month = (short_months.index(m.capitalize)+1)
+  elsif m.to_i != 0
+    month = m.to_i
+  else
+    abort ("cal: please enter either a month number, the full name of a month, or the three-letter short name of a month")
+  end
+  #--------------------------------------------
 
-  m_string = month.to_month_s
+  month = Month.new(month, year).to_a
 
-  m_array = m_string.scan(/.{20}/)
-
-  final_line_count = m_string.length%20
-
-  final_line = m_string.slice(final_line_count*-1, final_line_count)
-
-  m_array << final_line if final_line != ''
-
-  m_array.each do |line|
+  month.each do |line|
     puts line.rstrip
   end
-
 end
